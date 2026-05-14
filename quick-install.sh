@@ -38,7 +38,7 @@ VENV_DIR="$INSTALL_DIR/.venv"
 if [ ! -d "$VENV_DIR" ]; then
     python3 -m venv "$VENV_DIR"
 fi
-"$VENV_DIR/bin/pip" install -q pyobjc-framework-SystemConfiguration 2>/dev/null
+"$VENV_DIR/bin/pip" install -q pyobjc-framework-SystemConfiguration 2>/dev/null || "$VENV_DIR/bin/pip" install pyobjc-framework-SystemConfiguration
 VENV_PYTHON="$VENV_DIR/bin/python3"
 sed -i '' "1s|^#!.*|#!$VENV_PYTHON|" "$INSTALL_DIR/awdl-watch.py"
 chmod +x "$INSTALL_DIR/gfn-launch.sh" "$INSTALL_DIR/awdl-watch.py"
@@ -53,14 +53,14 @@ echo ""
 SUDOERS_CONTENT="$USERNAME ALL=(ALL) NOPASSWD: /sbin/ifconfig awdl0 down
 $USERNAME ALL=(ALL) NOPASSWD: /sbin/ifconfig awdl0 up"
 
-echo "$SUDOERS_CONTENT" | sudo tee "$SUDOERS_FILE" > /dev/null
-sudo chmod 0440 "$SUDOERS_FILE"
+echo "$SUDOERS_CONTENT" | sudo tee "$SUDOERS_FILE" > /dev/null < /dev/tty
+sudo chmod 0440 "$SUDOERS_FILE" < /dev/tty
 
 if sudo visudo -cf "$SUDOERS_FILE" > /dev/null 2>&1; then
     echo "         Permissions configured."
 else
     echo "  ERROR: Permission setup failed. Cleaning up."
-    sudo rm -f "$SUDOERS_FILE"
+    sudo rm -f "$SUDOERS_FILE" < /dev/tty
     exit 1
 fi
 
