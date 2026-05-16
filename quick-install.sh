@@ -94,6 +94,7 @@ cat > "$PLIST_PATH" <<PLIST
 PLIST
 
 launchctl load "$PLIST_PATH"
+rm -rf "$INSTALL_DIR/.git"
 echo "         Done."
 
 echo ""
