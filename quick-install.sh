@@ -50,17 +50,19 @@ echo "         Your Mac password is needed once to allow"
 echo "         the tool to toggle the awdl0 interface."
 echo ""
 
+sudo -v < /dev/tty
+
 SUDOERS_CONTENT="$USERNAME ALL=(ALL) NOPASSWD: /sbin/ifconfig awdl0 down
 $USERNAME ALL=(ALL) NOPASSWD: /sbin/ifconfig awdl0 up"
 
-echo "$SUDOERS_CONTENT" | sudo tee "$SUDOERS_FILE" > /dev/null < /dev/tty
-sudo chmod 0440 "$SUDOERS_FILE" < /dev/tty
+echo "$SUDOERS_CONTENT" | sudo tee "$SUDOERS_FILE" > /dev/null
+sudo chmod 0440 "$SUDOERS_FILE"
 
 if sudo visudo -cf "$SUDOERS_FILE" > /dev/null 2>&1; then
     echo "         Permissions configured."
 else
     echo "  ERROR: Permission setup failed. Cleaning up."
-    sudo rm -f "$SUDOERS_FILE" < /dev/tty
+    sudo rm -f "$SUDOERS_FILE"
     exit 1
 fi
 
