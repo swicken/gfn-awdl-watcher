@@ -2,13 +2,14 @@
 """
 Event-driven awdl0 monitor using macOS SCDynamicStore.
 Reacts instantly to network changes instead of polling.
-Falls back to a slow poll as a safety net.
+Stops and restores awdl0 when GeForce NOW exits.
 """
 
 import subprocess
 import sys
 import signal
 import time
+import os
 from SystemConfiguration import (
     SCDynamicStoreCreate,
     SCDynamicStoreSetNotificationKeys,
@@ -26,6 +27,7 @@ from SystemConfiguration import SCDynamicStoreCreateRunLoopSource
 
 INTERFACE = "awdl0"
 FALLBACK_POLL = 5.0
+GFN_PROCESS = "GeForceNOW"
 
 
 def log(msg):
@@ -43,9 +45,26 @@ def is_awdl_up():
         return False
 
 
+def is_gfn_running():
+    try:
+        subprocess.check_output(
+            ["pgrep", "-x", GFN_PROCESS], stderr=subprocess.DEVNULL
+        )
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def disable_awdl():
     subprocess.run(
         ["sudo", "/sbin/ifconfig", INTERFACE, "down"],
+        capture_output=True,
+    )
+
+
+def enable_awdl():
+    subprocess.run(
+        ["sudo", "/sbin/ifconfig", INTERFACE, "up"],
         capture_output=True,
     )
 
@@ -87,6 +106,11 @@ def main():
     while True:
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, FALLBACK_POLL, False)
         check_and_disable()
+        if not is_gfn_running():
+            log(f"{GFN_PROCESS} exited.")
+            enable_awdl()
+            log(f"{INTERFACE} restored. AirDrop/Handoff re-enabled.")
+            break
 
 
 if __name__ == "__main__":
